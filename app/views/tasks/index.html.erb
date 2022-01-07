@@ -1,0 +1,68 @@
+<h2>Coin Task</h2>
+<div class="m-3 mt-5" id="task-list">
+  <%= link_to "发布任务", "#", class: "btn btn-primary mb-5 addTaskBtn" %>
+  <div id="coins-container">
+  <table class="table">
+    <thead>
+      <th>ID</th>
+      <th>发布时间</th>
+      <th>任务状态</th>
+      <th>发布人</th>
+      <th>任务名称</th>
+      <th>任务内容</th>
+      <th>赏金</th>
+      <th>认领人</th>
+      <th>完成时间</th>
+      <th></th>
+    </thead>
+    <tbody>
+      <% @tasks.each do |task| %>
+        <tr class="task" data-publisher=<%= task.publisher %>>
+          <td style="width: 2%"><%= task.id %></td>
+          <td style="width: 10%"><%= time_format(task.created_at) %></td>
+          <td style="width: 5%"><%= task.status %></td>
+          <td style="width: 15%"><%= task.publisher %></td>
+          <td style="width: 8%"><%= task.title %></td>
+          <td style="width: 15%"><%= task.description %></td>
+          <td style="width: 5%"><%= task.reward %></td>
+          <td><%= task.receiver %></td>
+          <td style="width: 10%"><%= time_format(task.completed_at) %></td>
+          <td>
+            <%= link_to "领取", take_task_path(task), class: "btn btn-warning takeBtn", method: :put if task.submitted? %>
+            <%= link_to "确认完成", "#", class: "btn btn-primary completeBtn", data: {id: task.id, receiver: task.receiver} if task.taken? %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+
+<div class="modal fade" id="addTaskModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="uploadTaskModalLabel">发布任务</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <%= form_with url: tasks_path, scope: :task, method: :post do |f| %>
+        <div class="modal-body">
+          <div class="field mb-4">
+            <%= f.text_field :title, class: "input-sm form-control", placeholder: '请填写任务名称' %>
+          </div>
+          <div class="field mb-4">
+            <%= f.text_area :description, class: "input-sm form-control", placeholder: '请填写任务详情' %>
+          </div>
+          <div class="field mb-4">
+            <%= f.number_field :reward, class: "input-sm form-control", placeholder: '请填写赏金数量' %>
+          </div>
+          <%= f.hidden_field :publisher %>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <%= f.submit "确定", class: "btn btn-primary submitBtn", data: {disable_with: "发布中..."}%>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
