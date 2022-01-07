@@ -1,5 +1,5 @@
 class TasksController < ApplicationController
-  before_action :get_task, only: [:take, :complete]
+  before_action :get_task, only: [:take, :complete, :confirm]
 
   def index
     @tasks = Task.order(created_at: :desc).page(params[:page]).per(20)
@@ -25,10 +25,16 @@ class TasksController < ApplicationController
   end
 
   def complete
+    @task.audit!
+
+    redirect_to tasks_path, notice: "任务已完成"
+  end
+
+  def confirm
     @task.completed_at = Time.now
     @task.done!
 
-    redirect_to tasks_path, notice: "任务已完成"
+    redirect_to tasks_path, notice: "任务已确认"
   end
 
   private

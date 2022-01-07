@@ -5,6 +5,7 @@ Rails.application.routes.draw do
     member do
       put :take
       put :complete
+      put :confirm
     end
   end
 end

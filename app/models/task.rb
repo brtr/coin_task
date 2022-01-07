@@ -1,6 +1,6 @@
 class Task < ApplicationRecord
   validates :title, :description, :reward, :publisher, presence: :true
-  enum status: [:submitted, :taken, :done]
+  enum status: [:submitted, :taken, :audit, :done]
 
   before_create :generate_status
 

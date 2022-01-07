@@ -17,7 +17,7 @@
     </thead>
     <tbody>
       <% @tasks.each do |task| %>
-        <tr class="task" data-publisher=<%= task.publisher %>>
+        <tr class="task" data-publisher=<%= task.publisher %> data-receiver=<%= task.receiver%>>
           <td style="width: 2%"><%= task.id %></td>
           <td style="width: 10%"><%= time_format(task.created_at) %></td>
           <td style="width: 5%"><%= task.status %></td>
@@ -28,8 +28,9 @@
           <td><%= task.receiver %></td>
           <td style="width: 10%"><%= time_format(task.completed_at) %></td>
           <td>
-            <%= link_to "领取", take_task_path(task), class: "btn btn-warning takeBtn", method: :put if task.submitted? %>
-            <%= link_to "确认完成", "#", class: "btn btn-primary completeBtn", data: {id: task.id, receiver: task.receiver} if task.taken? %>
+            <%= link_to "领取任务", take_task_path(task), class: "btn btn-warning takeBtn", method: :put if task.submitted? %>
+            <%= link_to "完成任务", "#", class: "btn btn-primary completeBtn", data: {id: task.id, receiver: task.receiver} if task.taken? %>
+            <%= link_to "确认完成", "#", class: "btn btn-success confirmBtn", data: {id: task.id} if task.audit? %>
           </td>
         </tr>
       <% end %>
