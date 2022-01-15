@@ -18,6 +18,7 @@ const contractAddress = NODE_ENV["CONTRACT_ADDRESS"];
 const Contract = new ethers.Contract(contractAddress, contractABI, provider);
 const contractWithSigner = Contract.connect(signer);
 const TargetChain = {id: NODE_ENV["CHAIN_ID"], name: NODE_ENV["CHAIN_NAME"]};
+const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
 function toggleAddress() {
     if(loginAddress) {
@@ -55,7 +56,6 @@ const take = async function(taskId) {
     const tx = await contractWithSigner.take(taskId, loginAddress);
     await tx.wait();
     console.log("take task is ", tx);
-    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     const url = "/tasks/" + taskId + "/take";
     const $form = $('<form action="' + url + '" method="post">' +
         '<input type="hidden" name="authenticity_token" value="' + token + '" />' +
@@ -69,7 +69,6 @@ const complete = async function(taskId) {
     const tx = await contractWithSigner.complete(taskId);
     await tx.wait();
     console.log("complete task is ", tx);
-    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     const url = "/tasks/" + taskId + "/complete";
     const $form = $('<form action="' + url + '" method="post">' +
         '<input type="hidden" name="authenticity_token" value="' + token + '" />' +
@@ -82,7 +81,6 @@ const confirm = async function(taskId) {
     const tx = await contractWithSigner.confirm(taskId);
     await tx.wait();
     console.log("confirm task is ", tx);
-    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     const url = "/tasks/" + taskId + "/confirm";
     const $form = $('<form action="' + url + '" method="post">' +
         '<input type="hidden" name="authenticity_token" value="' + token + '" />' +
@@ -91,9 +89,26 @@ const confirm = async function(taskId) {
     $form.submit();
 }
 
+const updateForm = function() {
+    const $form = $("#editForm");
+    const taskId = $form.find("#task_id").val();
+    const title = $form.find("#task_title").val();
+    const desc = $form.find("#task_description").val();
+    const url = "/tasks/" + taskId;
+    const $newForm = $('<form action="' + url + '" method="post">' +
+                    '<input type="hidden" name="authenticity_token" value="' + token + '" />' +
+                    '<input type="hidden" name="_method" value="put" />' +
+                    '<input type="hidden" name="task[title]" value="' + title + '" />' +
+                    '<input type="hidden" name="task[description]" value="' + desc + '" /></form>');
+    $('body').append($newForm);
+    $newForm.submit();
+}
+
 $(document).on('turbolinks:load', function() {
     'use strict';
     $(function() {
+        $('[data-bs-toggle="tooltip"]').tooltip({html: true});
+
         toggleAddress();
 
         // detect Metamask account change
@@ -117,13 +132,20 @@ $(document).on('turbolinks:load', function() {
             }
         });
 
+        $(".editBtn").hide();
+
         $(".task").each(function () {
-            if ($(this).data("publisher") != loginAddress) {
-                $("#confirmBtn").hide();
+            console.log("task id: ", $(this).data("id"));
+            console.log("login address: ", $(this).data("publisher") == loginAddress);
+
+            if ($(this).data("publisher") == loginAddress) {
+                $(this).find(".editBtn").show();
+            } else {
+                $(this).find(".confirmBtn").hide();
             }
 
             if ($(this).data("receiver") != loginAddress) {
-                $("#completeBtn").hide();
+                $(this).find(".completeBtn").hide();
             }
         });
 
@@ -184,6 +206,17 @@ $(document).on('turbolinks:load', function() {
             $("#spinner").removeClass("hide");
             const taskId = $(this).data("id");
             confirm(taskId);
+        })
+
+        $(".editBtn").on("click", function(e) {
+            e.preventDefault();
+            $("#task_id").val($(this).data("id"));
+            $("#editTaskModal").modal("show");
+        })
+
+        $(document).on("click", ".submitEditBtn", function(e) {
+            e.preventDefault();
+            updateForm();
         })
     });
 });
