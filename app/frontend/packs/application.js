@@ -20,6 +20,12 @@ const contractWithSigner = Contract.connect(signer);
 const TargetChain = {id: NODE_ENV["CHAIN_ID"], name: NODE_ENV["CHAIN_NAME"]};
 const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
+function fetchErrMsg (err) {
+    const errMsg = err.error ? err.error.message : err.message;
+    alert('Error:  ' + errMsg.split(": ")[1]);
+    $("#spinner").addClass("hide");
+}
+
 function toggleAddress() {
     if(loginAddress) {
         $("#login_address").text(loginAddress);
@@ -44,49 +50,65 @@ const checkLogin = async function() {
 }
 
 const addTask = async function(taskId, reward) {
-    contractWithSigner.addTaskInfo(taskId, reward)
-    .then(function(receipt) {
-        console.log("add task receipt: ", receipt);
+    try {
+        const tx = await contractWithSigner.addTaskInfo(taskId, reward);
+        await tx.wait();
+
+        console.log("add task receipt: ", tx);
         location.reload();
         alert("Add task success");
-    })
+    } catch (err) {
+        fetchErrMsg(err);
+    }
 }
 
 const take = async function(taskId) {
-    const tx = await contractWithSigner.take(taskId, loginAddress);
-    await tx.wait();
-    console.log("take task is ", tx);
-    const url = "/tasks/" + taskId + "/take";
-    const $form = $('<form action="' + url + '" method="post">' +
-        '<input type="hidden" name="authenticity_token" value="' + token + '" />' +
-        '<input type="hidden" name="receiver" value="' + loginAddress + '" />' +
-        '<input type="hidden" name="_method" value="put" /></form>');
-    $('body').append($form);
-    $form.submit();
+    try {
+        const tx = await contractWithSigner.take(taskId, loginAddress);
+        await tx.wait();
+        console.log("take task receipt:", tx);
+        const url = "/tasks/" + taskId + "/take";
+        const $form = $('<form action="' + url + '" method="post">' +
+            '<input type="hidden" name="authenticity_token" value="' + token + '" />' +
+            '<input type="hidden" name="receiver" value="' + loginAddress + '" />' +
+            '<input type="hidden" name="_method" value="put" /></form>');
+        $('body').append($form);
+        $form.submit();
+    } catch (err) {
+        fetchErrMsg(err);
+    }
 }
 
 const complete = async function(taskId) {
-    const tx = await contractWithSigner.complete(taskId);
-    await tx.wait();
-    console.log("complete task is ", tx);
-    const url = "/tasks/" + taskId + "/complete";
-    const $form = $('<form action="' + url + '" method="post">' +
-        '<input type="hidden" name="authenticity_token" value="' + token + '" />' +
-        '<input type="hidden" name="_method" value="put" /></form>');
-    $('body').append($form);
-    $form.submit();
+    try {
+        const tx = await contractWithSigner.complete(taskId);
+        await tx.wait();
+        console.log("complete task receipt:", tx);
+        const url = "/tasks/" + taskId + "/complete";
+        const $form = $('<form action="' + url + '" method="post">' +
+            '<input type="hidden" name="authenticity_token" value="' + token + '" />' +
+            '<input type="hidden" name="_method" value="put" /></form>');
+        $('body').append($form);
+        $form.submit();
+    } catch (err) {
+        fetchErrMsg(err);
+    }
 }
 
 const confirm = async function(taskId) {
-    const tx = await contractWithSigner.confirm(taskId);
-    await tx.wait();
-    console.log("confirm task is ", tx);
-    const url = "/tasks/" + taskId + "/confirm";
-    const $form = $('<form action="' + url + '" method="post">' +
-        '<input type="hidden" name="authenticity_token" value="' + token + '" />' +
-        '<input type="hidden" name="_method" value="put" /></form>');
-    $('body').append($form);
-    $form.submit();
+    try {
+        const tx = await contractWithSigner.confirm(taskId);
+        await tx.wait();
+        console.log("confirm task receipt:", tx);
+        const url = "/tasks/" + taskId + "/confirm";
+        const $form = $('<form action="' + url + '" method="post">' +
+            '<input type="hidden" name="authenticity_token" value="' + token + '" />' +
+            '<input type="hidden" name="_method" value="put" /></form>');
+        $('body').append($form);
+        $form.submit();
+    } catch (err) {
+        fetchErrMsg(err);
+    }
 }
 
 const updateForm = function() {
