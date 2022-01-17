@@ -38,7 +38,7 @@
             <td data-bs-toggle="tooltip" title="<%= task.receiver %>"><%= truncate(task.receiver) %></td>
             <td style="width: 10%"><%= time_format(task.completed_at) %></td>
             <td>
-              <%= link_to "编辑", "#", class: "btn btn-secondary editBtn", data: {id: task.id} %>
+              <%= link_to "编辑", "#", class: "btn btn-secondary editBtn", data: {id: task.id, title: task.title, desc: task.description} %>
               <%= link_to "领取任务", "#", class: "btn btn-warning takeBtn",  data: {id: task.id, receiver: task.receiver} if task.submitted? %>
               <%= link_to "完成任务", "#", class: "btn btn-primary completeBtn", data: {id: task.id} if task.taken? %>
               <%= link_to "确认完成", "#", class: "btn btn-success confirmBtn", data: {id: task.id} if task.audit? %>

@@ -135,9 +135,6 @@ $(document).on('turbolinks:load', function() {
         $(".editBtn").hide();
 
         $(".task").each(function () {
-            console.log("task id: ", $(this).data("id"));
-            console.log("login address: ", $(this).data("publisher") == loginAddress);
-
             if ($(this).data("publisher") == loginAddress) {
                 $(this).find(".editBtn").show();
             } else {
@@ -210,7 +207,9 @@ $(document).on('turbolinks:load', function() {
 
         $(".editBtn").on("click", function(e) {
             e.preventDefault();
-            $("#task_id").val($(this).data("id"));
+            $("#editForm").find("#task_id").val($(this).data("id"));
+            $("#editForm").find("#task_title").val($(this).data("title"));
+            $("#editForm").find("#task_description").val($(this).data("desc"));
             $("#editTaskModal").modal("show");
         })
 
