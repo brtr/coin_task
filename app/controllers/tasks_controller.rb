@@ -49,6 +49,16 @@ class TasksController < ApplicationController
     redirect_to tasks_path
   end
 
+  def destroy
+    if @task.submitted? && @task.destroy
+      flash[:alert] = "发布任务失败，请重试"
+    else
+      flash[:alert] = @task.errors.full_messages.join(', ')
+    end
+
+    redirect_to tasks_path
+  end
+
   private
   def task_params
     params.require(:task).permit(:title, :description, :reward, :publisher, :receiver)

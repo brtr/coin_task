@@ -26,6 +26,14 @@ function fetchErrMsg (err) {
     $("#spinner").addClass("hide");
 }
 
+async function checkChainId () {
+    const { chainId } = await provider.getNetwork();
+    if (chainId != parseInt(TargetChain.id)) {
+        alert("We don't support this chain, please switch to " + TargetChain.name);
+        return;
+    }
+}
+
 function toggleAddress() {
     if(loginAddress) {
         $("#login_address").text(loginAddress);
@@ -50,6 +58,8 @@ const checkLogin = async function() {
 }
 
 const addTask = async function(taskId, reward) {
+    checkChainId();
+
     try {
         const tx = await contractWithSigner.addTaskInfo(taskId, reward);
         await tx.wait();
@@ -59,10 +69,18 @@ const addTask = async function(taskId, reward) {
         alert("Add task success");
     } catch (err) {
         fetchErrMsg(err);
+        const url = "/tasks/" + taskId;
+        const $form = $('<form action="' + url + '" method="post">' +
+            '<input type="hidden" name="authenticity_token" value="' + token + '" />' +
+            '<input type="hidden" name="_method" value="delete" /></form>');
+        $('body').append($form);
+        $form.submit();
     }
 }
 
 const take = async function(taskId) {
+    checkChainId();
+
     try {
         const tx = await contractWithSigner.take(taskId, loginAddress);
         await tx.wait();
@@ -80,6 +98,8 @@ const take = async function(taskId) {
 }
 
 const complete = async function(taskId) {
+    checkChainId();
+
     try {
         const tx = await contractWithSigner.complete(taskId);
         await tx.wait();
@@ -96,6 +116,8 @@ const complete = async function(taskId) {
 }
 
 const confirm = async function(taskId) {
+    checkChainId();
+
     try {
         const tx = await contractWithSigner.confirm(taskId);
         await tx.wait();
@@ -131,6 +153,7 @@ $(document).on('turbolinks:load', function() {
     $(function() {
         $('[data-bs-toggle="tooltip"]').tooltip({html: true});
 
+        checkChainId();
         toggleAddress();
 
         // detect Metamask account change
@@ -150,7 +173,7 @@ $(document).on('turbolinks:load', function() {
         ethereum.on('chainChanged', function(networkId){
             console.log('networkChanged',networkId);
             if (networkId != parseInt(TargetChain.id)) {
-            alert("We don't support this chain, please switch to " + TargetChain.name);
+                alert("We don't support this chain, please switch to " + TargetChain.name);
             }
         });
 
