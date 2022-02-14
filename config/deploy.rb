@@ -23,20 +23,61 @@ set :rbenv_prefix, "RBENV_ROOT=#{fetch(:rbenv_path)} RBENV_VERSION=#{fetch(:rben
 set :rbenv_map_bins, %w{rake gem bundle ruby rails}
 set :bundler_path, "/home/deploy/.rbenv/shims/bundle"
 
-# Default value for :linked_files is []
-# append :linked_files, "config/database.yml"
+set :puma_config_path, -> { File.join(current_path, "config", "puma_production.rb") }
 
-# Default value for linked_dirs is []
-# append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "public/system"
+# for assets
+set :assets_role, :web
 
-# Default value for default_env is {}
-# set :default_env, { path: "/opt/ruby/bin:$PATH" }
+set :keep_assets, 2
 
-# Default value for local_user is ENV['USER']
-# set :local_user, -> { `git config user.name`.chomp }
+set :bundler_path, "/home/deploy/.rbenv/shims/bundle"
 
-# Default value for keep_releases is 5
-# set :keep_releases, 5
+namespace :deploy do
+  after :publishing, 'web:restart'
+  after :finishing, :cleanup
+end
 
-# Uncomment the following to require manually verifying the host key before first deploy.
-# set :ssh_options, verify_host_key: :secure
+namespace :web do
+  task :setup_config do
+    on roles(:web) do
+      upload_systemd_config('web')
+    end
+  end
+
+  task :setup_socket do
+    on roles(:web) do
+      upload_systemd_config('web', 'socket')
+      execute :systemctl, "--user", "start", "web-#{fetch(:application)}.socket"
+    end
+  end
+
+  task :stop do
+    on roles(:web) do
+      execute :systemctl, "--user", "stop", "web-#{fetch(:application)}.service"
+    end
+  end
+
+  task :restart do
+    on roles(:web) do
+      execute :systemctl, "--user", "restart", "web-#{fetch(:application)}.service"
+    end
+  end
+end
+
+def upload_systemd_config(app, type = 'service')
+  template = File.read("config//deploy/templates/#{app}.#{type}.capistrano.erb")
+  systemd_path = fetch(:service_unit_path, fetch_systemd_unit_path)
+  execute :mkdir, "-p", systemd_path
+  upload!(
+    StringIO.new(ERB.new(template).result(binding)),
+    "#{systemd_path}/#{app}-#{fetch(:application)}.#{type}"
+  )
+  execute :systemctl, "--user", "daemon-reload"
+  execute :systemctl, "--user", "enable", "#{app}-#{fetch(:application)}.#{type}"
+end
+
+def fetch_systemd_unit_path
+  home_dir = capture :pwd
+  File.join(home_dir, ".config", "systemd", "user")
+end
+
